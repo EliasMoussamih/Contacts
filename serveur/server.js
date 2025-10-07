@@ -1,46 +1,69 @@
-import express from "express";
 import dotenv from "dotenv";
-import connecterBD from "./src/config/bd.js"; 
-import routeurAuthentification from "./src/routes/authentification.js";
+dotenv.config();
 
-// Swagger
+
+import express from "express";
+import cors from "cors";
+import connecterBD from "./src/config/bd.js";
+import routeurAuthentification from "./src/routes/authentification.js";
+import routeurContacts from "./src/routes/contacts.js";
+
+
 import swaggerUi from "swagger-ui-express";
 import swaggerJsdoc from "swagger-jsdoc";
 
-dotenv.config();       
-connecterBD();         
+
+console.log("MONGODB_URL =", process.env.MONGODB_URL);
+connecterBD();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware pour lire le body JSON
+app.use(cors({
+  origin: "http://localhost:3000", 
+  credentials: true                 
+}));
+
+
 app.use(express.json());
 
-// Route racine
+
 app.get("/", (req, res) => {
-  res.send("Hello World");
+  res.send("Serveur MyContacts en ligne !");
 });
 
-// Brancher les routes avant app.listen
+// Routes
 app.use("/authentification", routeurAuthentification);
+app.use("/contacts", routeurContacts);
 
-// Swagger
+// Configuration de Swagger
 const options = {
   definition: {
     openapi: "3.0.0",
     info: {
       title: "API MyContacts",
       version: "1.0.0",
-      description: "Documentation des endpoints de l'application MyContacts"
-    }
+      description: "Documentation des endpoints de l'application MyContacts",
+    },
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: "http",
+          scheme: "bearer",
+          bearerFormat: "JWT",
+        },
+      },
+    },
   },
-  apis: ["./src/routes/*.js"], 
+  apis: ["./src/routes/*.js"],
 };
 
 const specs = swaggerJsdoc(options);
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(specs));
 
-// Lancer le serveur
+
 app.listen(PORT, () => {
   console.log(`Le serveur tourne sur : http://localhost:${PORT}`);
 });
+
+export default app;
