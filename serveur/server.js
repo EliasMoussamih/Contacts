@@ -19,12 +19,22 @@ connecterBD();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Configuration CORS
+// Configuration CORS dynamique
+const allowedOrigins = [
+  process.env.FRONTEND_URL || "http://localhost:3000", // dev
+  "https://stellular-valkyrie-753a69.netlify.app",     // front Netlify
+];
+
 const corsOptions = {
-  origin: [
-    "http://localhost:3000", // dev
-    "https://stellular-valkyrie-753a69.netlify.app", // front Netlify
-  ],
+  origin: function (origin, callback) {
+    // Autoriser les requêtes sans origine (Postman, CURL, etc.)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
   credentials: true,
 };
 app.use(cors(corsOptions));
